@@ -1,0 +1,12 @@
+extends layout
+
+
+block content
+  body
+    .container.mt-5
+      h2 File Upload
+      form(action='/upload' method='post' enctype='multipart/form-data')
+        .form-group
+          label(for='file') Choose file to upload
+          input#file.form-control-file(type='file' name='file')
+        button.btn.btn-primary(type='submit') Upload

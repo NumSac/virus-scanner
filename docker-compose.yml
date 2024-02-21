@@ -1,0 +1,104 @@
+version: '3.7'
+
+services:
+  freshclam:
+    build:
+      context: scanner/clamav/docker
+      dockerfile: Dockerfile
+    environment:
+      MODE: freshclam
+    volumes:
+    - conf:/etc/clamav
+    - data:/var/lib/clamav        
+    networks:
+      virus-scanner-network:
+        aliases:
+          - virus-scanner-network
+  
+  clamav:
+    depends_on:
+      - freshclam
+    build:
+      context: scanner/clamav/docker
+      dockerfile: Dockerfile
+    environment:
+      MODE: clamd
+    ulimits:
+      stack: 1048576
+    volumes:
+      - conf:/etc/clamav
+      - data:/var/lib/clamav
+    ports:
+      - "3310:3310"
+
+    expose:
+      - 3310
+    networks:
+      virus-scanner-network:
+        aliases:
+          - virus-scanner-network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./docker/mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+    networks:
+      - virus-scanner-network
+
+  s3-storage:
+    image: localstack/localstack:latest
+    environment:
+      # permite más servicios separados por comas
+      - SERVICES=s3 
+      - DEBUG=1
+      - DEFAULT_REGION=eu-west-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    ports:
+      # localstack usa rango de puertos, para el ejemplo,
+      # usaremos solo el de S3, mapeado en local a 14566 en un 
+      # fichero docker-compose.override.yml para permitir 
+      # tests con puerto dinámico
+      - "4566:4566"
+    volumes:
+      # inicializaremos un bucket aquí
+      - './docker/s3-storage/.init:/docker-entrypoint-initaws.d'
+      # no versionado, localstack nos generará aquí el .pem 
+      # para nuestras claves de acceso fake
+      - './docker/s3-storage/.localstack:/tmp/localstack'
+    networks:
+      - virus-scanner-network
+
+
+  # api:
+  #   restart: always
+  #   build:
+  #     context: verializer/
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     - clamav
+  #   ports:
+  #     - 3000:3000
+  #   expose:
+  #     - 3000
+  #   env_file:
+  #     - verializer/.env
+  #   networks:
+  #     virus-scanner-network:
+  #       aliases:
+  #         - virus-scanner-network
+
+networks:
+  virus-scanner-network:
+    driver: bridge
+
+
+volumes:
+  conf:
+  data:
+  mongodb_data:
