@@ -4,14 +4,15 @@ import { Submission } from "../models/submission";
 import { createHash } from "crypto";
 import S3ClientService, { s3Client } from "../services/aws/s3ClientService";
 import { generateUniqueFileName } from "../utils/helper/helpers";
-import awsConfig from "../config/awsConfig";
 
 // Initialize S3 service
 
+// Upload page
 export const renderUpload = (req: Request, res: Response): any => {
-  res.render("uploads/upload");
+  res.render("upload");
 };
 
+// Post upload <file>
 export const submitUpload = async (
   req: Request,
   res: Response
@@ -33,19 +34,19 @@ export const submitUpload = async (
 
     const uniqueName = generateUniqueFileName(file.originalname, checksum);
 
-    // Initialize s3Service with DI
+    //Initialize s3Service with DI
     const s3Service = new S3ClientService(s3Client);
 
     // Upload file to s3
     await s3Service.uploadFile(
-      "submissions",
+      process.env.AWS_BUCKET!,
       uniqueName,
       file.buffer,
       file.mimetype
     );
     // this is for actual deployment
     //const fileUrl = `https://${awsConfig.bucketName}.s3.${awsConfig.awsRegion}.amazonaws.com/${uniqueName}`;
-    const fileUrl = `http://localhost:4566/${uniqueName}`;
+    const fileUrl = `http://localhost:4566/${process.env.AWS_BUCKET}/${uniqueName}`;
 
     // Save to results to moongo
     const uploadedSubmission = new Submission({
@@ -80,32 +81,13 @@ export const submitUpload = async (
           isInfected: false,
           viruses: "",
           savedSubmission,
+          reportId: savedSubmission._id,
         },
       });
     }
-  } catch (err) {
-    console.error("Error scanning the file:", err);
-    // Handle errors appropriately
-    return res.status(500).render("error", {
-      message: "An error occurred while scanning the file.",
-      fileInfo: {
-        fileName: req.file ? req.file.originalname : "Unknown",
-        isInfected: null,
-        viruses: "",
-      },
-    });
-  }
-};
-
-export const getSubmissions = (req: Request, res: Response): any => {
-  try {
-    const s3Service = new S3ClientService(s3Client);
-
-    const items = s3Service.listObjects(awsConfig.bucketName!);
-
-    return res.render("submissions/index", items);
-  } catch (err: unknown) {
-    console.log("Error while retrieving uploads");
+  } catch (error) {
+    console.error("Error scanning the file:", error);
+    return res.render("error", { error });
   }
 };
 

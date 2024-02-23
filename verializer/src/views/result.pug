@@ -10,10 +10,12 @@ block content
           h2 Infected File Detected
           p The file "#{fileInfo.fileName}" is infected.
           p Detected viruses: #{fileInfo.viruses}
+          a(href=`/reports/${fileInfo.reportId}`) See details
       else if fileInfo.isInfected == false
         .alert.alert-success
           h2 Clean File
           p The file "#{fileInfo.fileName}" is clean and free from viruses.
+          a(href=`/reports/${fileInfo.reportId}`) See details
       else
         .alert.alert-warning
           h2 Error

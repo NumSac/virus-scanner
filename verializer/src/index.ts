@@ -9,6 +9,8 @@ import sessionConfig from "./config/sessionConfig";
 
 import session from "express-session";
 import reportsRouter from "./routes/reports.routes";
+import path from "path";
+import ExpressError from "./utils/ExpressError";
 
 dotenv.config();
 
@@ -20,7 +22,7 @@ async function startServer() {
   try {
     // Configure express
     app.set("view engine", "pug");
-    app.set("views", __dirname + "/views");
+    app.set("views", path.join(__dirname, "views"));
     app.use(session(sessionConfig));
 
     // Connect to Mongo
@@ -33,6 +35,10 @@ async function startServer() {
 
     app.get(["/", "/home"], (req: Request, res: Response) => {
       res.render("index");
+    });
+
+    app.all("*", (req: Request, res: Response, next: NextFunction) => {
+      next(new ExpressError("Page Not Found", 404));
     });
 
     app.use(

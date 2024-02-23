@@ -2,7 +2,6 @@ import catchAsync from "../utils/catchAsync";
 import upload from "../utils/fileUpload";
 import express, { Router } from "express";
 import {
-  getSubmissions,
   renderUpload,
   submitUpload,
 } from "../controllers/submissions.controllers";

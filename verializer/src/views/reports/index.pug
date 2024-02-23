@@ -1,0 +1,22 @@
+extends ../layout 
+
+block content
+  .container.mt-4
+    h2 All Submissions
+    table.table.table-striped.mt-3
+      thead
+        tr
+          th Scope
+          th Filename
+          th Is Infected?
+          th Submitted At
+          th Action
+      tbody
+        each submission, index in submissions
+          tr
+            td= index + 1
+            td= submission.filename
+            td= submission.isInfected ? 'Yes' : 'No'
+            td= submission.createdAt.toLocaleString()
+            td
+              a.btn.btn-primary(href=`/reports/${submission._id}`) See Report

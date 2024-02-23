@@ -1,0 +1,38 @@
+extends ../layout
+
+block content
+  .container.mt-4
+    h2 Submission Details
+    .card
+      .card-body
+        h5.card-title Filename: #{submission.filename}
+        p.card-text
+          strong Is Infected?: 
+          | #{submission.isInfected ? 'Yes' : 'No'}
+        if submission.cveNumbers && submission.cveNumbers.length > 0
+          p.card-text
+            strong CVE Numbers: 
+            | #{submission.cveNumbers.join(', ')}
+        if submission.viruses && submission.viruses.length > 0
+          p.card-text
+            strong Viruses: 
+            | #{submission.viruses.join(', ')}
+        p.card-text
+          strong SHA256 Sum: 
+          | #{submission.sha256sum}
+        p.card-text
+          strong File Location: 
+          a(href=submission.fileLocation, target="_blank") #{submission.fileLocation}
+        //- Add a button for downloading the report
+        button#downloadReport.btn.btn-primary(type="button") Download Report
+
+
+  //- Add custom JavaScript for the download
+  script.
+    document.addEventListener('DOMContentLoaded', function() {
+      const downloadBtn = document.getElementById('downloadReport');
+      downloadBtn.addEventListener('click', function() {
+        const submissionId = '#{submission._id}'; // Assuming you have the submission ID available in the submission object
+        window.location.href = `/reports/${submissionId}/download`;
+      });
+    });
